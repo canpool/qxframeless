@@ -16,7 +16,6 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_actionExit_triggered();
     void on_pushButtonMinimize_clicked();
     void on_pushButtonClose_clicked();
     void on_pushButtonMaximize_clicked();

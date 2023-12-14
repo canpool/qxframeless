@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QApplication>
 #include <QMenuBar>
+#include <QMenu>
 #include <QCheckBox>
 #include <QSpinBox>
 #include <QPushButton>
@@ -19,7 +20,30 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->menubar->installEventFilter(this);
+    QMenuBar *menubar = new QMenuBar(this);
+    menubar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    QMenu *menu = menubar->addMenu(tr("File"));
+    menu->addAction(tr("action1"));
+    menu->addAction(tr("action2"));
+    menu->addAction(tr("action3"));
+    menu = menubar->addMenu(tr("Edit"));
+    menu->addAction(tr("action1"));
+
+    QHBoxLayout *titleLayout = new QHBoxLayout();
+    titleLayout->setSpacing(0);
+    titleLayout->setContentsMargins(1, 1, 1, 0);
+    titleLayout->addWidget(menubar);
+    titleLayout->addStretch();
+    titleLayout->addWidget(new QPushButton(tr("button1")));
+    titleLayout->addWidget(new QPushButton(tr("button2")));
+    titleLayout->addWidget(new QPushButton(tr("button3")));
+
+    QWidget *titleWidget = new QWidget(this);
+    titleWidget->setLayout(titleLayout);
+    setMenuWidget(titleWidget);
+
+    qDebug() << titleWidget->height();
+
     ui->spinBoxTitleHeight->setRange(10, 40);
     ui->spinBoxBorderWidth->setRange(2, 10);
 
@@ -64,7 +88,6 @@ MainWindow::MainWindow(QWidget *parent) :
         helper->setBorderWidth(value);
     });
 
-
     setWindowTitle(tr("FramelessHelper Demo"));
     resize(800, 400);
 }
@@ -72,11 +95,6 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::on_actionExit_triggered()
-{
-    qApp->quit();
 }
 
 void MainWindow::on_pushButtonMinimize_clicked()
@@ -98,35 +116,4 @@ void MainWindow::on_pushButtonMaximize_clicked()
         ui->pushButtonMaximize->setText(tr("restore"));
         showMaximized();
     }
-}
-
-bool MainWindow::eventFilter(QObject *obj, QEvent *e)
-{
-    if (obj == ui->menubar) {
-        switch (e->type()) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::Leave:
-        case QEvent::HoverMove:
-        case QEvent::MouseButtonDblClick: {
-            QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(e);
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-            QPoint pos = mouseEvent->globalPos();
-#else
-            QPoint pos = mouseEvent->position().toPoint();
-#endif
-            QWidget *child = QApplication::widgetAt(pos);
-            if (child) {
-            qDebug() << child->metaObject()->className();
-            if (child == ui->menubar) {
-                QApplication::sendEvent(this, e); // post to framelessHelper
-            }
-            }
-        }
-        default:
-            break;
-        }
-    }
-    return QMainWindow::eventFilter(obj, e);
 }
