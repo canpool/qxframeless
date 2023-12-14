@@ -7,16 +7,54 @@
 
 #include "qxframeless_global.h"
 #include <QObject>
+#include <QAbstractNativeEventFilter>
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#define QxResult qintptr
+#else
+#define QxResult long
+#endif // QTRESULT
 
 QX_FRAMELESS_BEGIN_NAMESPACE
 
 class FramelessHelperPrivate;
 
-class QX_FRAMELESS_EXPORT FramelessHelper : public QObject
+class QX_FRAMELESS_EXPORT FramelessHelper : public QObject, public QAbstractNativeEventFilter
 {
     Q_OBJECT
 public:
-    explicit FramelessHelper(QObject *parent = nullptr);
+    explicit FramelessHelper(QObject *parent);
+    ~FramelessHelper();
+
+    void addWidget(QWidget *w);
+    void removeWidget(QWidget *w);
+
+    bool widgetResizable() const;
+    void setWidgetResizable(bool resizable);
+
+    bool widgetMovable() const;
+    void setWidgetMovable(bool movable);
+
+    bool rubberBandOnMove() const;
+    void setRubberBandOnMove(bool movable);
+
+    bool rubberBandOnResize() const;
+    void setRubberBandOnResize(bool resizable);
+
+    int titleHeight() const;
+    void setTitleHeight(int height);
+
+    int borderWidth() const;
+    void setBorderWidth(int width);
+
+signals:
+    void windowIconChanged(const QIcon &icon);
+    void windowTitleChanged(const QString &title);
+    void windowStateChanged(Qt::WindowStates state);
+
+protected:
+    virtual bool eventFilter(QObject* object, QEvent* event);
+    virtual bool nativeEventFilter(const QByteArray &eventType, void *message, QxResult *result);
 
 private:
     QX_DECLARE_PRIVATE(FramelessHelper)

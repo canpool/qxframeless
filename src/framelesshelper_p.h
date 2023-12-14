@@ -7,10 +7,12 @@
 
 #include "qxframeless_global.h"
 #include <QObject>
+#include <QHash>
 
 QX_FRAMELESS_BEGIN_NAMESPACE
 
 class FramelessHelper;
+class FramelessWidgetData;
 
 class FramelessHelperPrivate : public QObject
 {
@@ -18,6 +20,14 @@ class FramelessHelperPrivate : public QObject
     QX_DECLARE_PUBLIC(FramelessHelper)
 public:
     explicit FramelessHelperPrivate(QObject *parent = nullptr);
+    virtual ~FramelessHelperPrivate();
+
+public:
+    QHash<QWidget *, FramelessWidgetData *> m_widgetDataHash;
+    bool m_bWidgetResizable = true;
+    bool m_bWidgetMovable = true;
+    bool m_bRubberBandOnResize = false;
+    bool m_bRubberBandOnMove = false;
 };
 
 QX_FRAMELESS_END_NAMESPACE
