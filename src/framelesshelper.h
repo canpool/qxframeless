@@ -35,12 +35,6 @@ public:
     bool widgetMovable() const;
     void setWidgetMovable(bool movable);
 
-    bool rubberBandOnMove() const;
-    void setRubberBandOnMove(bool movable);
-
-    bool rubberBandOnResize() const;
-    void setRubberBandOnResize(bool resizable);
-
     int titleHeight() const;
     void setTitleHeight(int height);
 

@@ -32,20 +32,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBoxRubberBandOnMove">
-        <property name="text">
-         <string>setRubberBandOnMove</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkBoxRubberBandOnResize">
-        <property name="text">
-         <string>setRubberBandOnResize</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>

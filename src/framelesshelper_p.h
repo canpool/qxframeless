@@ -26,8 +26,6 @@ public:
     QHash<QWidget *, FramelessWidgetData *> m_widgetDataHash;
     bool m_bWidgetResizable = true;
     bool m_bWidgetMovable = true;
-    bool m_bRubberBandOnResize = false;
-    bool m_bRubberBandOnMove = false;
 };
 
 QX_FRAMELESS_END_NAMESPACE

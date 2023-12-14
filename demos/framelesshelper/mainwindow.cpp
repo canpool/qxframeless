@@ -59,8 +59,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->checkBoxWidgetMovable->setChecked(helper->widgetMovable());
     ui->checkBoxWidgetResizable->setChecked(helper->widgetResizable());
-    ui->checkBoxRubberBandOnMove->setChecked(helper->rubberBandOnMove());
-    ui->checkBoxRubberBandOnResize->setChecked(helper->rubberBandOnResize());
 
     connect(ui->checkBoxWidgetMovable, &QCheckBox::clicked, this, [helper](bool checked) {
         helper->setWidgetMovable(checked);
@@ -68,12 +66,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->checkBoxWidgetResizable, &QCheckBox::clicked, this, [this, helper](bool checked) {
         helper->setWidgetResizable(checked);
         ui->statusbar->setSizeGripEnabled(checked);
-    });
-    connect(ui->checkBoxRubberBandOnMove, &QCheckBox::clicked, this, [helper](bool checked) {
-        helper->setRubberBandOnMove(checked);
-    });
-    connect(ui->checkBoxRubberBandOnResize, &QCheckBox::clicked, this, [helper](bool checked) {
-        helper->setRubberBandOnResize(checked);
     });
 
     ui->spinBoxTitleHeight->setValue(helper->titleHeight());

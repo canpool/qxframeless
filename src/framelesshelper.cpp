@@ -111,7 +111,6 @@ public:
 
     QWidget *widget();
     bool handleWidgetEvent(QEvent *event);
-    void updateRubberBandStatus();
 
 private:
     void updateCursorShape(const QPoint &gMousePos);
@@ -127,7 +126,6 @@ private:
 
 private:
     FramelessHelperPrivate *d;
-    QRubberBand *m_pRubberBand;
     QWidget *m_pWidget;
     QPoint m_ptDragPos;
     FramelessCursor m_pressedMousePos;
@@ -146,22 +144,16 @@ FramelessWidgetData::FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *pT
     m_bLeftButtonPressed = false;
     m_bCursorShapeChanged = false;
     m_bLeftButtonTitlePressed = false;
-    m_pRubberBand = nullptr;
 
     m_windowFlags = m_pWidget->windowFlags();
     m_pWidget->setMouseTracking(true);
     m_pWidget->setAttribute(Qt::WA_Hover, true);
-
-    updateRubberBandStatus();
 }
 
 FramelessWidgetData::~FramelessWidgetData()
 {
     m_pWidget->setMouseTracking(false);
     m_pWidget->setAttribute(Qt::WA_Hover, false);
-
-    delete m_pRubberBand;
-    m_pRubberBand = nullptr;
 }
 
 QWidget *FramelessWidgetData::widget()
@@ -188,18 +180,6 @@ bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
         break;
     }
     return false;
-}
-
-void FramelessWidgetData::updateRubberBandStatus()
-{
-    if (d->m_bRubberBandOnMove || d->m_bRubberBandOnResize) {
-        if (nullptr == m_pRubberBand) {
-            m_pRubberBand = new QRubberBand(QRubberBand::Rectangle);
-        }
-    } else {
-        delete m_pRubberBand;
-        m_pRubberBand = nullptr;
-    }
 }
 
 void FramelessWidgetData::updateCursorShape(const QPoint &gMousePos)
@@ -235,13 +215,7 @@ void FramelessWidgetData::updateCursorShape(const QPoint &gMousePos)
 
 void FramelessWidgetData::resizeWidget(const QPoint &gMousePos)
 {
-    QRect origRect;
-
-    if (d->m_bRubberBandOnResize) {
-        origRect = m_pRubberBand->frameGeometry();
-    } else {
-        origRect = m_pWidget->frameGeometry();
-    }
+    QRect origRect = m_pWidget->frameGeometry();
 
     int left = origRect.left();
     int top = origRect.top();
@@ -293,21 +267,13 @@ void FramelessWidgetData::resizeWidget(const QPoint &gMousePos)
             }
         }
 
-        if (d->m_bRubberBandOnResize) {
-            m_pRubberBand->setGeometry(newRect);
-        } else {
-            m_pWidget->setGeometry(newRect);
-        }
+        m_pWidget->setGeometry(newRect);
     }
 }
 
 void FramelessWidgetData::moveWidget(const QPoint &gMousePos)
 {
-    if (d->m_bRubberBandOnMove) {
-        m_pRubberBand->move(gMousePos - m_ptDragPos);
-    } else {
-        m_pWidget->move(gMousePos - m_ptDragPos);
-    }
+    m_pWidget->move(gMousePos - m_ptDragPos);
 }
 
 bool FramelessWidgetData::handleMousePressEvent(QMouseEvent *event)
@@ -329,18 +295,6 @@ bool FramelessWidgetData::handleMousePressEvent(QMouseEvent *event)
             if (m_pWidget->isMaximized() || m_pWidget->isFullScreen()) {
                 return false;
             }
-            if (d->m_bRubberBandOnResize) {
-                m_pRubberBand->setGeometry(frameRect);
-                m_pRubberBand->show();
-                return true;
-            }
-        } else if (d->m_bRubberBandOnMove && m_bLeftButtonTitlePressed) {
-            if (m_pWidget->isMaximized() || m_pWidget->isFullScreen()) {
-                return false;
-            }
-            m_pRubberBand->setGeometry(frameRect);
-            m_pRubberBand->show();
-            return true;
         }
     }
     return false;
@@ -352,11 +306,6 @@ bool FramelessWidgetData::handleMouseReleaseEvent(QMouseEvent *event)
         m_bLeftButtonPressed = false;
         m_bLeftButtonTitlePressed = false;
         m_pressedMousePos.reset();
-        if (m_pRubberBand && m_pRubberBand->isVisible()) {
-            m_pRubberBand->hide();
-            m_pWidget->setGeometry(m_pRubberBand->geometry());
-            return true;
-        }
     }
     return false;
 }
@@ -521,36 +470,6 @@ void FramelessHelper::setWidgetMovable(bool movable)
 {
     Q_D(FramelessHelper);
     d->m_bWidgetMovable = movable;
-}
-
-bool FramelessHelper::rubberBandOnMove() const
-{
-    Q_D(const FramelessHelper);
-    return d->m_bRubberBandOnMove;
-}
-
-void FramelessHelper::setRubberBandOnMove(bool movable)
-{
-    Q_D(FramelessHelper);
-    d->m_bRubberBandOnMove = movable;
-    foreach (FramelessWidgetData * data, d->m_widgetDataHash.values()) {
-        data->updateRubberBandStatus();
-    }
-}
-
-bool FramelessHelper::rubberBandOnResize() const
-{
-    Q_D(const FramelessHelper);
-    return d->m_bRubberBandOnResize;
-}
-
-void FramelessHelper::setRubberBandOnResize(bool resizable)
-{
-    Q_D(FramelessHelper);
-    d->m_bRubberBandOnResize = resizable;
-    foreach (FramelessWidgetData * data, d->m_widgetDataHash.values()) {
-        data->updateRubberBandStatus();
-    }
 }
 
 int FramelessHelper::titleHeight() const
