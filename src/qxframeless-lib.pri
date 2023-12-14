@@ -20,3 +20,7 @@ HEADERS += \
 
 SOURCES += \
     $$PWD/framelesshelper.cpp
+
+win32-msvc {
+    LIBS += -lUser32
+}
