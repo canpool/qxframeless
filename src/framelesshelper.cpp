@@ -21,6 +21,10 @@
 
 QX_FRAMELESS_BEGIN_NAMESPACE
 
+
+static int s_nBorderWidth = 5;
+static int s_nTitleHeight = 30;
+
 /* FramelessHelperPrivate */
 FramelessHelperPrivate::FramelessHelperPrivate(QObject *parent)
     : QObject(parent)
@@ -53,13 +57,7 @@ public:
     bool m_bOnBottomLeftEdge;
     bool m_bOnTopRightEdge;
     bool m_bOnBottomRightEdge;
-
-    static int m_nBorderWidth;
-    static int m_nTitleHeight;
 };
-
-int FramelessCursor::m_nBorderWidth = 5;
-int FramelessCursor::m_nTitleHeight = 30;
 
 FramelessCursor::FramelessCursor()
 {
@@ -88,11 +86,11 @@ void FramelessCursor::update(const QPoint &gMousePos, const QRect &frameRect)
     int frameWidth   = frameRect.width();
     int frameHeight  = frameRect.height();
 
-    m_bOnLeftEdge    = (globalMouseX >= frameX && globalMouseX <= frameX + m_nBorderWidth);
-    m_bOnRightEdge   = (globalMouseX >= frameX + frameWidth - m_nBorderWidth &&
+    m_bOnLeftEdge    = (globalMouseX >= frameX && globalMouseX <= frameX + s_nBorderWidth);
+    m_bOnRightEdge   = (globalMouseX >= frameX + frameWidth - s_nBorderWidth &&
                         globalMouseX <= frameX + frameWidth);
-    m_bOnTopEdge     = (globalMouseY >= frameY && globalMouseY <= frameY + m_nBorderWidth);
-    m_bOnBottomEdge  = (globalMouseY >= frameY + frameHeight - m_nBorderWidth &&
+    m_bOnTopEdge     = (globalMouseY >= frameY && globalMouseY <= frameY + s_nBorderWidth);
+    m_bOnBottomEdge  = (globalMouseY >= frameY + frameHeight - s_nBorderWidth &&
                         globalMouseY <= frameY + frameHeight);
 
     m_bOnTopLeftEdge     = m_bOnTopEdge && m_bOnLeftEdge;
@@ -316,7 +314,7 @@ bool FramelessWidgetData::handleMousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         m_bLeftButtonPressed = true;
-        m_bLeftButtonTitlePressed = event->pos().y() < m_moveMousePos.m_nTitleHeight;
+        m_bLeftButtonTitlePressed = event->pos().y() < s_nTitleHeight;
 
         QRect frameRect = m_pWidget->frameGeometry();
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -438,7 +436,7 @@ bool FramelessWidgetData::handleDoubleClickedMouseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         if (m_pWidget->windowFlags() & Qt::WindowMaximizeButtonHint) {
-            bool titlePressed = event->pos().y() < m_moveMousePos.m_nTitleHeight;
+            bool titlePressed = event->pos().y() < s_nTitleHeight;
             if (titlePressed && !m_pWidget->isFullScreen()) {
                 if (m_pWidget->isMaximized()) {
                     m_pWidget->showNormal();
@@ -557,25 +555,25 @@ void FramelessHelper::setRubberBandOnResize(bool resizable)
 
 int FramelessHelper::titleHeight() const
 {
-    return FramelessCursor::m_nTitleHeight;
+    return s_nTitleHeight;
 }
 
 void FramelessHelper::setTitleHeight(int height)
 {
     if (height > 0) {
-        FramelessCursor::m_nTitleHeight = height;
+        s_nTitleHeight = height;
     }
 }
 
 int FramelessHelper::borderWidth() const
 {
-    return FramelessCursor::m_nBorderWidth;
+    return s_nBorderWidth;
 }
 
 void FramelessHelper::setBorderWidth(int width)
 {
     if (width > 0) {
-        FramelessCursor::m_nBorderWidth = width;
+        s_nBorderWidth = width;
     }
 }
 
