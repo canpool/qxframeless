@@ -101,16 +101,53 @@ void FramelessCursor::update(const QPoint &gMousePos, const QRect &frameRect)
     m_bOnEdges = m_bOnLeftEdge || m_bOnRightEdge || m_bOnTopEdge || m_bOnBottomEdge;
 }
 
-/* FramelessWidgetData  */
-
 class FramelessWidgetData
 {
 public:
-    explicit FramelessWidgetData(FramelessHelperPrivate *d, QWidget *pTopLevelWidget);
-    ~FramelessWidgetData();
+    explicit FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *widget);
+    virtual ~FramelessWidgetData();
 
     QWidget *widget();
-    bool handleWidgetEvent(QEvent *event);
+    virtual bool handleWidgetEvent(QEvent *event);
+
+protected:
+    FramelessHelperPrivate *d;
+    QWidget *m_pWidget;
+};
+
+
+FramelessWidgetData::FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *widget)
+{
+    Q_ASSERT(widget);
+    d = _d;
+    m_pWidget = widget;
+}
+
+FramelessWidgetData::~FramelessWidgetData()
+{
+
+}
+
+QWidget *FramelessWidgetData::widget()
+{
+    return m_pWidget;
+}
+
+bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
+{
+    Q_UNUSED(event);
+    return false;
+}
+
+/* FramelessWidgetDataQt  */
+
+class FramelessWidgetDataQt : public FramelessWidgetData
+{
+public:
+    explicit FramelessWidgetDataQt(FramelessHelperPrivate *d, QWidget *widget);
+    ~FramelessWidgetDataQt();
+
+    bool handleWidgetEvent(QEvent *event) override;
 
 private:
     void updateCursorShape(const QPoint &gMousePos);
@@ -125,8 +162,6 @@ private:
     bool handleDoubleClickedMouseEvent(QMouseEvent *event);
 
 private:
-    FramelessHelperPrivate *d;
-    QWidget *m_pWidget;
     QPoint m_ptDragPos;
     FramelessCursor m_pressedMousePos;
     FramelessCursor m_moveMousePos;
@@ -136,11 +171,9 @@ private:
     Qt::WindowFlags m_windowFlags;
 };
 
-FramelessWidgetData::FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *pTopLevelWidget)
+FramelessWidgetDataQt::FramelessWidgetDataQt(FramelessHelperPrivate *_d, QWidget *widget)
+    : FramelessWidgetData(_d, widget)
 {
-    Q_ASSERT(pTopLevelWidget);
-    d = _d;
-    m_pWidget = pTopLevelWidget;
     m_bLeftButtonPressed = false;
     m_bCursorShapeChanged = false;
     m_bLeftButtonTitlePressed = false;
@@ -150,18 +183,13 @@ FramelessWidgetData::FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *pT
     m_pWidget->setAttribute(Qt::WA_Hover, true);
 }
 
-FramelessWidgetData::~FramelessWidgetData()
+FramelessWidgetDataQt::~FramelessWidgetDataQt()
 {
     m_pWidget->setMouseTracking(false);
     m_pWidget->setAttribute(Qt::WA_Hover, false);
 }
 
-QWidget *FramelessWidgetData::widget()
-{
-    return m_pWidget;
-}
-
-bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
+bool FramelessWidgetDataQt::handleWidgetEvent(QEvent *event)
 {
     switch (event->type()) {
     case QEvent::MouseButtonPress:
@@ -182,7 +210,7 @@ bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
     return false;
 }
 
-void FramelessWidgetData::updateCursorShape(const QPoint &gMousePos)
+void FramelessWidgetDataQt::updateCursorShape(const QPoint &gMousePos)
 {
     if (m_pWidget->isFullScreen() || m_pWidget->isMaximized()) {
         if (m_bCursorShapeChanged) {
@@ -213,7 +241,7 @@ void FramelessWidgetData::updateCursorShape(const QPoint &gMousePos)
     }
 }
 
-void FramelessWidgetData::resizeWidget(const QPoint &gMousePos)
+void FramelessWidgetDataQt::resizeWidget(const QPoint &gMousePos)
 {
     QRect origRect = m_pWidget->frameGeometry();
 
@@ -271,12 +299,12 @@ void FramelessWidgetData::resizeWidget(const QPoint &gMousePos)
     }
 }
 
-void FramelessWidgetData::moveWidget(const QPoint &gMousePos)
+void FramelessWidgetDataQt::moveWidget(const QPoint &gMousePos)
 {
     m_pWidget->move(gMousePos - m_ptDragPos);
 }
 
-bool FramelessWidgetData::handleMousePressEvent(QMouseEvent *event)
+bool FramelessWidgetDataQt::handleMousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         m_bLeftButtonPressed = true;
@@ -300,7 +328,7 @@ bool FramelessWidgetData::handleMousePressEvent(QMouseEvent *event)
     return false;
 }
 
-bool FramelessWidgetData::handleMouseReleaseEvent(QMouseEvent *event)
+bool FramelessWidgetDataQt::handleMouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         m_bLeftButtonPressed = false;
@@ -310,7 +338,7 @@ bool FramelessWidgetData::handleMouseReleaseEvent(QMouseEvent *event)
     return false;
 }
 
-bool FramelessWidgetData::handleMouseMoveEvent(QMouseEvent *event)
+bool FramelessWidgetDataQt::handleMouseMoveEvent(QMouseEvent *event)
 {
     if (m_bLeftButtonPressed) {
         if (d->m_bWidgetResizable && m_pressedMousePos.m_bOnEdges) {
@@ -359,7 +387,7 @@ bool FramelessWidgetData::handleMouseMoveEvent(QMouseEvent *event)
     return false;
 }
 
-bool FramelessWidgetData::handleLeaveEvent(QEvent *event)
+bool FramelessWidgetDataQt::handleLeaveEvent(QEvent *event)
 {
     Q_UNUSED(event)
     if (!m_bLeftButtonPressed) {
@@ -369,7 +397,7 @@ bool FramelessWidgetData::handleLeaveEvent(QEvent *event)
     return false;
 }
 
-bool FramelessWidgetData::handleHoverMoveEvent(QHoverEvent *event)
+bool FramelessWidgetDataQt::handleHoverMoveEvent(QHoverEvent *event)
 {
     if (d->m_bWidgetResizable) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -381,7 +409,7 @@ bool FramelessWidgetData::handleHoverMoveEvent(QHoverEvent *event)
     return false;
 }
 
-bool FramelessWidgetData::handleDoubleClickedMouseEvent(QMouseEvent *event)
+bool FramelessWidgetDataQt::handleDoubleClickedMouseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
         if (m_pWidget->windowFlags() & Qt::WindowMaximizeButtonHint) {
@@ -431,7 +459,7 @@ void FramelessHelper::addWidget(QWidget *w)
 {
     Q_D(FramelessHelper);
     if (!d->m_widgetDataHash.contains(w)) {
-        FramelessWidgetData *data = new FramelessWidgetData(d, w);
+        FramelessWidgetDataQt *data = new FramelessWidgetDataQt(d, w);
         d->m_widgetDataHash.insert(w, data);
         w->installEventFilter(this);
     }
