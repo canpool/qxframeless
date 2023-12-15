@@ -9,8 +9,11 @@
 #include <QApplication>
 #include <QHoverEvent>
 #include <QMouseEvent>
-#include <QRubberBand>
 #include <QIcon>
+
+#ifdef QX_FRAMELESS_NATIVE
+#include <QWindow>
+#endif // QX_FRAMELESS_NATIVE
 
 #ifdef Q_OS_WINDOWS
 #include <windows.h>
@@ -36,6 +39,182 @@ FramelessHelperPrivate::~FramelessHelperPrivate()
 {
 
 }
+
+class FramelessWidgetData
+{
+public:
+    explicit FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *widget);
+    virtual ~FramelessWidgetData();
+
+    QWidget *widget();
+    virtual bool handleWidgetEvent(QEvent *event);
+
+protected:
+    FramelessHelperPrivate *d;
+    QWidget *m_pWidget;
+};
+
+
+FramelessWidgetData::FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *widget)
+{
+    Q_ASSERT(widget);
+    d = _d;
+    m_pWidget = widget;
+}
+
+FramelessWidgetData::~FramelessWidgetData()
+{
+
+}
+
+QWidget *FramelessWidgetData::widget()
+{
+    return m_pWidget;
+}
+
+bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
+{
+    Q_UNUSED(event);
+    return false;
+}
+
+
+#ifdef QX_FRAMELESS_NATIVE
+
+#ifdef Q_OS_WINDOWS
+
+/* FramelessWidgetDataNativeWin */
+
+class FramelessWidgetDataNativeWin : public FramelessWidgetData
+{
+public:
+    explicit FramelessWidgetDataNativeWin(FramelessHelperPrivate *_d, QWidget *widget);
+    virtual ~FramelessWidgetDataNativeWin();
+
+    bool handleNativeWindowsMessage(MSG *msg, QXRESULT *result);
+
+    bool handleNonClinetCalcSize(MSG *msg, QXRESULT *result);
+    bool handleNonClientHitTest(MSG *msg, QXRESULT *result);
+};
+
+FramelessWidgetDataNativeWin::FramelessWidgetDataNativeWin(FramelessHelperPrivate *_d, QWidget *widget)
+    : FramelessWidgetData(_d, widget)
+{
+    HWND hwnd = (HWND)m_pWidget->winId();
+    DWORD style = ::GetWindowLongPtr(hwnd, GWL_STYLE);
+    ::SetWindowLongPtr(hwnd, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+}
+
+FramelessWidgetDataNativeWin::~FramelessWidgetDataNativeWin()
+{
+
+}
+
+bool FramelessWidgetDataNativeWin::handleNativeWindowsMessage(MSG *msg, QXRESULT *result)
+{
+    switch (msg->message) {
+    case WM_NCCALCSIZE:
+        return handleNonClinetCalcSize(msg, result);
+    case WM_NCHITTEST:
+        return handleNonClientHitTest(msg, result);
+    }
+
+    return false;
+}
+
+bool FramelessWidgetDataNativeWin::handleNonClinetCalcSize(MSG *msg, QXRESULT *result)
+{
+    // https://docs.microsoft.com/en-us/windows/win32/winmsg/wm-nccalcsize
+    *result = 0;
+    // If wParam is FALSE, no need handle
+    if (!msg->wParam) {
+        return true;
+    }
+    // https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-nccalcsize_params
+    // If wParam is TRUE, lParam points to the NCCALCSIZE_PARAMS structure, which contains information
+    // that the application can use to calculate the new size and position of the client rectangle.
+    NCCALCSIZE_PARAMS *pncsp = reinterpret_cast<NCCALCSIZE_PARAMS *>(msg->lParam);
+
+    const int originalTop = pncsp->rgrc[0].top;
+    const RECT originalRect = pncsp->rgrc[0];
+
+    // call default window proc to handle WM_NCCALCSIZE message
+    const auto ret = ::DefWindowProc(msg->hwnd, WM_NCCALCSIZE, msg->wParam, msg->lParam);
+    if (ret != 0) {
+        *result = ret;
+        return true;
+    }
+    pncsp->rgrc[0].top = originalTop;
+
+    bool isMaximized = GetWindowStyle(msg->hwnd) & WS_MAXIMIZE;
+    if (isMaximized) {
+#ifdef SM_CXPADDEDBORDER
+        int border = GetSystemMetrics(SM_CXSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+#else
+        int border = GetSystemMetrics(SM_CXSIZEFRAME);
+#endif
+        pncsp->rgrc[0].top += border;
+    } else {
+        pncsp->rgrc[0] = originalRect;
+    }
+    return true;
+}
+
+bool FramelessWidgetDataNativeWin::handleNonClientHitTest(MSG *msg, QXRESULT *result)
+{
+    // https://docs.microsoft.com/en-us/windows/win32/dwm/customframe#appendix-c-hittestnca-function
+    int borderWidth = s_nBorderWidth;
+
+    long x = GET_X_LPARAM(msg->lParam);
+    long y = GET_Y_LPARAM(msg->lParam);
+    QPoint pos = m_pWidget->mapFromGlobal(QPoint(x, y));
+    int w = m_pWidget->width();
+    int h = m_pWidget->height();
+
+    bool left = pos.x() < borderWidth;
+    bool right = pos.x() > w - borderWidth;
+    bool top = pos.y() < borderWidth;
+    bool bottom = pos.y() > h - borderWidth;
+
+    *result = HTNOWHERE;
+    if (d->m_bWidgetResizable) {
+        if (top && left) {
+            *result = HTTOPLEFT;
+        } else if (top && right) {
+            *result = HTTOPRIGHT;
+        } else if (bottom && left) {
+            *result = HTBOTTOMLEFT;
+        } else if (bottom && right) {
+            *result = HTBOTTOMRIGHT;
+        } else if (left) {
+            *result = HTLEFT;
+        } else if (right) {
+            *result = HTRIGHT;
+        } else if (top) {
+            *result = HTTOP;
+        } else if (bottom) {
+            *result = HTBOTTOM;
+        }
+    }
+
+    if (*result != HTNOWHERE) {
+        return true;
+    }
+
+    if (d->m_bWidgetMovable && pos.y() < s_nTitleHeight) {
+        QWidget *child = m_pWidget->childAt(pos);
+        if (!child || qstrcmp(child->metaObject()->className(), "QWidget") == 0) {
+            // A non-QWidget or non-QWidget-derived class in the title bar belongs to the blank area
+            *result = HTCAPTION;
+            return true;
+        }
+    }
+    return false;
+}
+
+#endif // Q_OS_WINDOWS
+
+#else // not QX_FRAMELESS_NATIVE
 
 /* FramelessCursor */
 
@@ -101,43 +280,6 @@ void FramelessCursor::update(const QPoint &gMousePos, const QRect &frameRect)
     m_bOnEdges = m_bOnLeftEdge || m_bOnRightEdge || m_bOnTopEdge || m_bOnBottomEdge;
 }
 
-class FramelessWidgetData
-{
-public:
-    explicit FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *widget);
-    virtual ~FramelessWidgetData();
-
-    QWidget *widget();
-    virtual bool handleWidgetEvent(QEvent *event);
-
-protected:
-    FramelessHelperPrivate *d;
-    QWidget *m_pWidget;
-};
-
-
-FramelessWidgetData::FramelessWidgetData(FramelessHelperPrivate *_d, QWidget *widget)
-{
-    Q_ASSERT(widget);
-    d = _d;
-    m_pWidget = widget;
-}
-
-FramelessWidgetData::~FramelessWidgetData()
-{
-
-}
-
-QWidget *FramelessWidgetData::widget()
-{
-    return m_pWidget;
-}
-
-bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
-{
-    Q_UNUSED(event);
-    return false;
-}
 
 /* FramelessWidgetDataQt  */
 
@@ -427,6 +569,8 @@ bool FramelessWidgetDataQt::handleDoubleClickedMouseEvent(QMouseEvent *event)
     return false;
 }
 
+#endif // QX_FRAMELESS_NATIVE
+
 /* FramelessHelper */
 FramelessHelper::FramelessHelper(QObject *parent)
     : QObject(parent)
@@ -459,7 +603,15 @@ void FramelessHelper::addWidget(QWidget *w)
 {
     Q_D(FramelessHelper);
     if (!d->m_widgetDataHash.contains(w)) {
+#ifdef QX_FRAMELESS_NATIVE
+#ifdef Q_OS_WINDOWS
+        FramelessWidgetDataNativeWin *data = new FramelessWidgetDataNativeWin(d, w);
+#else
+        FramelessWidgetData *data = new FramelessWidgetData(d, w);
+#endif
+#else // QX_FRAMELESS_NATIVE
         FramelessWidgetDataQt *data = new FramelessWidgetDataQt(d, w);
+#endif
         d->m_widgetDataHash.insert(w, data);
         w->installEventFilter(this);
     }
@@ -469,7 +621,6 @@ void FramelessHelper::removeWidget(QWidget *w)
 {
     Q_D(FramelessHelper);
     FramelessWidgetData *data = d->m_widgetDataHash.take(w);
-
     if (data) {
         w->removeEventFilter(this);
         delete data;
@@ -556,7 +707,7 @@ bool FramelessHelper::eventFilter(QObject *object, QEvent *event)
     return QObject::eventFilter(object, event);
 }
 
-bool FramelessHelper::nativeEventFilter(const QByteArray &eventType, void *message, QxResult *result)
+bool FramelessHelper::nativeEventFilter(const QByteArray &eventType, void *message, QXRESULT *result)
 {
     Q_D(FramelessHelper);
 #ifdef Q_OS_WINDOWS
@@ -582,8 +733,16 @@ bool FramelessHelper::nativeEventFilter(const QByteArray &eventType, void *messa
                 }
             }
         }
+#ifdef QX_FRAMELESS_NATIVE
+        FramelessWidgetDataNativeWin *winData = reinterpret_cast<FramelessWidgetDataNativeWin *>(data);
+        if (winData == nullptr) {
+            return false;
+        }
+        return winData->handleNativeWindowsMessage(msg, result);
+#endif // QX_FRAMELESS_NATIVE
     }
-#endif
+#endif // Q_OS_WINDOWS
+
     return false;
 }
 

@@ -9,11 +9,13 @@
 #include <QObject>
 #include <QAbstractNativeEventFilter>
 
+#ifndef QXRESULT
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#define QxResult qintptr
+#define QXRESULT qintptr
 #else
-#define QxResult long
-#endif // QTRESULT
+#define QXRESULT long
+#endif // QT_VERSION
+#endif // QXRESULT
 
 QX_FRAMELESS_BEGIN_NAMESPACE
 
@@ -48,7 +50,7 @@ signals:
 
 protected:
     virtual bool eventFilter(QObject* object, QEvent* event);
-    virtual bool nativeEventFilter(const QByteArray &eventType, void *message, QxResult *result);
+    virtual bool nativeEventFilter(const QByteArray &eventType, void *message, QXRESULT *result);
 
 private:
     QX_DECLARE_PRIVATE(FramelessHelper)
