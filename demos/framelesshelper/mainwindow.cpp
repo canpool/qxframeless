@@ -76,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
         helper->setTitleHeight(value);
     });
     connect(ui->spinBoxBorderWidth, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            this, [helper](bool value) {
+            this, [helper](int value) {
         helper->setBorderWidth(value);
     });
 
