@@ -91,6 +91,8 @@ public:
     explicit FramelessWidgetDataNativeWin(FramelessHelperPrivate *_d, QWidget *widget);
     virtual ~FramelessWidgetDataNativeWin();
 
+    qreal devicePixelRatio();
+
     bool handleNativeWindowsMessage(MSG *msg, QXRESULT *result);
 
     bool handleNonClinetCalcSize(MSG *msg, QXRESULT *result);
@@ -108,6 +110,11 @@ FramelessWidgetDataNativeWin::FramelessWidgetDataNativeWin(FramelessHelperPrivat
 FramelessWidgetDataNativeWin::~FramelessWidgetDataNativeWin()
 {
 
+}
+
+qreal FramelessWidgetDataNativeWin::devicePixelRatio()
+{
+    return m_pWidget->screen()->devicePixelRatio();
 }
 
 bool FramelessWidgetDataNativeWin::handleNativeWindowsMessage(MSG *msg, QXRESULT *result)
@@ -167,7 +174,10 @@ bool FramelessWidgetDataNativeWin::handleNonClientHitTest(MSG *msg, QXRESULT *re
 
     long x = GET_X_LPARAM(msg->lParam);
     long y = GET_Y_LPARAM(msg->lParam);
-    QPoint pos = m_pWidget->mapFromGlobal(QPoint(x, y));
+    // If EnableHighDpiScaling is enabled for QApplication, then the pixelRatio is not necessarily 1.0,
+    // so pos needs to be scaled (tested on HightScreen-150% and LowScreen-100%)
+    qreal pixelRatio = devicePixelRatio();
+    QPoint pos = m_pWidget->mapFromGlobal(QPoint(x, y) / pixelRatio);
     int w = m_pWidget->width();
     int h = m_pWidget->height();
 
