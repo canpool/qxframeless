@@ -122,6 +122,13 @@
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButtonFull">
+          <property name="text">
+           <string>fullscreen</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pushButtonMinimize">
           <property name="text">
            <string>minimize</string>

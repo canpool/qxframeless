@@ -109,3 +109,19 @@ void MainWindow::on_pushButtonMaximize_clicked()
         showMaximized();
     }
 }
+
+void MainWindow::on_pushButtonFull_clicked()
+{
+    bool isfull = isFullScreen();
+    if (isfull) {
+        ui->pushButtonFull->setText(tr("fullscreen"));
+        showNormal();
+    } else {
+        ui->pushButtonFull->setText(tr("unfullscreen"));
+        showFullScreen();
+    }
+    ui->pushButtonMinimize->setEnabled(isfull);
+    ui->pushButtonMaximize->setEnabled(isfull);
+    ui->pushButtonClose->setEnabled(isfull);
+}
+

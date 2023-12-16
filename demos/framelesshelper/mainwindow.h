@@ -19,6 +19,7 @@ private slots:
     void on_pushButtonMinimize_clicked();
     void on_pushButtonClose_clicked();
     void on_pushButtonMaximize_clicked();
+    void on_pushButtonFull_clicked();
 
 private:
     Ui::MainWindow *ui;
