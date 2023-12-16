@@ -694,14 +694,6 @@ bool FramelessHelper::eventFilter(QObject *object, QEvent *event)
         return QObject::eventFilter(object, event);
     }
     switch (event->type()) {
-    case QEvent::MouseMove:
-    case QEvent::HoverMove:
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease:
-    case QEvent::MouseButtonDblClick:
-    case QEvent::Leave: {
-        return data->handleWidgetEvent(event);
-    }
     case QEvent::WindowTitleChange:
         emit windowTitleChanged(widget->windowTitle());
         return true;
@@ -712,7 +704,7 @@ bool FramelessHelper::eventFilter(QObject *object, QEvent *event)
         emit windowStateChanged(widget->windowState());
         return true;
     default:
-        break;
+        return data->handleWidgetEvent(event);
     }
     return QObject::eventFilter(object, event);
 }
