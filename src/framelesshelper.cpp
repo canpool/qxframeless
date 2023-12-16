@@ -732,12 +732,14 @@ bool FramelessHelper::nativeEventFilter(const QByteArray &eventType, void *messa
             case WM_GETMINMAXINFO: {
                 // prevent taskbar is covered when maximized
                 if (widget->isMaximized()) {
-                    const QRect rc = widget->screen()->availableGeometry();
+                    QScreen *screen = widget->screen();
+                    qreal ratio = screen->devicePixelRatio();
+                    const QRect rc = screen->availableGeometry();
                     MINMAXINFO *p = (MINMAXINFO *)(msg->lParam);
                     p->ptMaxPosition.x = 0;
                     p->ptMaxPosition.y = 0;
-                    p->ptMaxSize.x = rc.width();
-                    p->ptMaxSize.y = rc.height();
+                    p->ptMaxSize.x = rc.width() * ratio;
+                    p->ptMaxSize.y = rc.height() * ratio;
                     *result = ::DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
                     return true;
                 }
