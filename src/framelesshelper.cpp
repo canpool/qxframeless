@@ -93,6 +93,10 @@ bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
 
 #ifdef Q_OS_WINDOWS
 
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED   0x02E0
+#endif
+
 /* FramelessWidgetDataNativeWin */
 
 class FramelessWidgetDataNativeWin : public FramelessWidgetData
@@ -107,6 +111,9 @@ public:
 
     bool handleNonClinetCalcSize(MSG *msg, QXRESULT *result);
     bool handleNonClientHitTest(MSG *msg, QXRESULT *result);
+
+private:
+    UINT m_dpi[2] = {96, 96}; // 0-old, 1-new
 };
 
 FramelessWidgetDataNativeWin::FramelessWidgetDataNativeWin(FramelessHelperPrivate *_d, QWidget *widget)
@@ -115,6 +122,10 @@ FramelessWidgetDataNativeWin::FramelessWidgetDataNativeWin(FramelessHelperPrivat
     HWND hwnd = (HWND)m_pWidget->winId();
     DWORD style = ::GetWindowLongPtr(hwnd, GWL_STYLE);
     ::SetWindowLongPtr(hwnd, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+
+    // FIXME: 96 is not real DPI, should get it through windows api
+    // there are some apis as follows: GetDpiForMonitor, GetDpiForSystem, GetDpiForWindow
+    // reference to https://learn.microsoft.com/zh-cn/windows/win32/api/_hidpi/
 }
 
 FramelessWidgetDataNativeWin::~FramelessWidgetDataNativeWin()
@@ -134,7 +145,16 @@ bool FramelessWidgetDataNativeWin::handleNativeWindowsMessage(MSG *msg, QXRESULT
         return handleNonClinetCalcSize(msg, result);
     case WM_NCHITTEST:
         return handleNonClientHitTest(msg, result);
+    case WM_DPICHANGED: {
+        // handleDpiChanged
+        m_dpi[0] = m_dpi[1];
+        m_dpi[1] = HIWORD(msg->wParam);
+        break;
+    }
     case WM_MOVE: {
+        if (m_dpi[0] != m_dpi[1]) {
+            break;
+        }
         // When the window is moved between two screens (neither scaled, i.e., dpi with default values),
         // the window becomes smaller (the non-client area is lost and reduced to
         // 8,31,8,8(left,top,right,bottom) around), so the window SWP_FRAMECHANGED needs to be reconfigured
