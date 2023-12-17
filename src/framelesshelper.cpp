@@ -668,6 +668,10 @@ void FramelessHelper::addWidget(QWidget *w)
 #endif
         d->m_widgetDataHash.insert(w, data);
         w->installEventFilter(this);
+
+        connect(w, &QWidget::destroyed, this, [this, w]() {
+            this->removeWidget(w);
+        });
     }
 }
 
