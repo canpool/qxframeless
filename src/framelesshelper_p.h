@@ -22,8 +22,11 @@ public:
     explicit FramelessHelperPrivate(QObject *parent = nullptr);
     virtual ~FramelessHelperPrivate();
 
+    bool isCaptionClassName(const char *name);
+
 public:
     QHash<QWidget *, FramelessWidgetData *> m_widgetDataHash;
+    QList<QString> m_captionClassNameList;
     bool m_bWidgetResizable = true;
     bool m_bWidgetMovable = true;
 };

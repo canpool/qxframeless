@@ -32,12 +32,22 @@ static int s_nTitleHeight = 30;
 FramelessHelperPrivate::FramelessHelperPrivate(QObject *parent)
     : QObject(parent)
 {
-
+    m_captionClassNameList << "QWidget";
 }
 
 FramelessHelperPrivate::~FramelessHelperPrivate()
 {
 
+}
+
+bool FramelessHelperPrivate::isCaptionClassName(const char *name)
+{
+    foreach (const QString &cn, m_captionClassNameList) {
+        if (cn.compare(name) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 class FramelessWidgetData
@@ -227,7 +237,7 @@ bool FramelessWidgetDataNativeWin::handleNonClientHitTest(MSG *msg, QXRESULT *re
 
     if (d->m_bWidgetMovable && pos.y() < s_nTitleHeight) {
         QWidget *child = m_pWidget->childAt(pos);
-        if (!child || qstrcmp(child->metaObject()->className(), "QWidget") == 0) {
+        if (!child || d->isCaptionClassName(child->metaObject()->className())) {
             // A non-QWidget or non-QWidget-derived class in the title bar belongs to the blank area
             *result = HTCAPTION;
             return true;
@@ -696,6 +706,14 @@ void FramelessHelper::setBorderWidth(int width)
 {
     if (width > 0) {
         s_nBorderWidth = width;
+    }
+}
+
+void FramelessHelper::addCaptionClassName(const QString &name)
+{
+    Q_D(FramelessHelper);
+    if (!d->m_captionClassNameList.contains(name)) {
+        d->m_captionClassNameList.append(name);
     }
 }
 

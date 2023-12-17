@@ -43,6 +43,8 @@ public:
     int borderWidth() const;
     void setBorderWidth(int width);
 
+    void addCaptionClassName(const QString &name);
+
 signals:
     void windowIconChanged(const QIcon &icon);
     void windowTitleChanged(const QString &title);
