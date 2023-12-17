@@ -124,6 +124,19 @@ bool FramelessWidgetDataNativeWin::handleNativeWindowsMessage(MSG *msg, QXRESULT
         return handleNonClinetCalcSize(msg, result);
     case WM_NCHITTEST:
         return handleNonClientHitTest(msg, result);
+    case WM_MOVE: {
+        // When the window is moved between two screens (neither scaled, i.e., dpi with default values),
+        // the window becomes smaller (the non-client area is lost and reduced to
+        // 8,31,8,8(left,top,right,bottom) around), so the window SWP_FRAMECHANGED needs to be reconfigured
+        // to expand the client area
+        RECT rcClient;
+        GetWindowRect(msg->hwnd, &rcClient);
+        // Inform application of the frame change.
+        SetWindowPos(msg->hwnd, NULL, rcClient.left, rcClient.top,
+                     rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
+                     SWP_FRAMECHANGED);
+        break;
+    }
     }
 
     return false;
@@ -151,6 +164,7 @@ bool FramelessWidgetDataNativeWin::handleNonClinetCalcSize(MSG *msg, QXRESULT *r
         *result = ret;
         return true;
     }
+    // extend frame into client area
     pncsp->rgrc[0].top = originalTop;
 
     bool isMaximized = GetWindowStyle(msg->hwnd) & WS_MAXIMIZE;
