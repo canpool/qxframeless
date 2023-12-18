@@ -213,6 +213,11 @@ bool FramelessWidgetDataNativeWin::handleNonClinetCalcSize(MSG *msg, QXRESULT *r
 
 bool FramelessWidgetDataNativeWin::handleNonClientHitTest(MSG *msg, QXRESULT *result)
 {
+    *result = HTNOWHERE;
+    if (m_pWidget->isFullScreen()) {
+        return false;
+    }
+
     // https://docs.microsoft.com/en-us/windows/win32/dwm/customframe#appendix-c-hittestnca-function
     int borderWidth = s_nBorderWidth;
 
@@ -230,7 +235,6 @@ bool FramelessWidgetDataNativeWin::handleNonClientHitTest(MSG *msg, QXRESULT *re
     bool top = pos.y() < borderWidth;
     bool bottom = pos.y() > h - borderWidth;
 
-    *result = HTNOWHERE;
     if (d->m_bWidgetResizable) {
         if (top && left) {
             *result = HTTOPLEFT;
