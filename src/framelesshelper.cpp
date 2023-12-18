@@ -10,6 +10,7 @@
 #include <QHoverEvent>
 #include <QMouseEvent>
 #include <QIcon>
+#include <QSizeGrip>
 
 #ifdef QX_FRAMELESS_NATIVE
 #include <QWindow>
@@ -59,6 +60,8 @@ public:
     QWidget *widget();
     virtual bool handleWidgetEvent(QEvent *event);
 
+    void handleWindowStateChangeEvent();
+
 protected:
     FramelessHelperPrivate *d;
     QWidget *m_pWidget;
@@ -86,6 +89,15 @@ bool FramelessWidgetData::handleWidgetEvent(QEvent *event)
 {
     Q_UNUSED(event);
     return false;
+}
+
+void FramelessWidgetData::handleWindowStateChangeEvent()
+{
+    Qt::WindowStates state = m_pWidget->windowState();
+    bool resizeDisable = state.testFlag(Qt::WindowFullScreen) || state.testFlag(Qt::WindowMaximized);
+    foreach (QSizeGrip *sg, m_pWidget->findChildren<QSizeGrip *>()) {
+        sg->setVisible(!resizeDisable);
+    }
 }
 
 
@@ -762,6 +774,7 @@ bool FramelessHelper::eventFilter(QObject *object, QEvent *event)
         emit windowIconChanged(widget->windowIcon());
         return true;
     case QEvent::WindowStateChange:
+        data->handleWindowStateChangeEvent();
         emit windowStateChanged(widget->windowState());
         return true;
     default:
