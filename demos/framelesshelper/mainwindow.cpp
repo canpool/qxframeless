@@ -80,6 +80,30 @@ MainWindow::MainWindow(QWidget *parent) :
         helper->setBorderWidth(value);
     });
 
+    // test cases
+    {
+        // test addWidget and removeWidget
+
+        // FIXME: on NativeWin, the parent parameter of QWidget constructor function cannot specify this,
+        // otherwise the helper's WM_NCHITTEST message will fail. And debug report
+        // 'C:\Program Files (x86)\SogouInput\12.4.0.6503\Resource.dll':
+        //      Shared library architecture i386 is not compatible with target architecture i386:x86-64.
+        //
+        // QWidget *w1 = new QWidget(this);
+        //
+        QWidget *w1 = new QWidget();
+        helper->addWidget(w1);
+        delete w1;
+
+        QWidget *w2 = new QWidget();
+        helper->addWidget(w2);
+        helper->removeWidget(w2);
+        delete w2;
+
+        QWidget w3;
+        helper->addWidget(&w3);
+    }
+
     setWindowTitle(tr("FramelessHelper Demo"));
     resize(800, 400);
 }
