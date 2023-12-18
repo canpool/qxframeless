@@ -34,6 +34,7 @@ qxframeless 是一种 Qt 无边框窗口的解决方案，力求代码简约，�
 **2）构建支持**
 
 - qmake
+- cmake
 
 ### 协议
 * 遵循 [MulanPSL2](./LICENSE) 开源许可协议
