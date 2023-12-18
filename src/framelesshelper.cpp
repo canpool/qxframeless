@@ -678,6 +678,7 @@ void FramelessHelper::addWidget(QWidget *w)
 void FramelessHelper::removeWidget(QWidget *w)
 {
     Q_D(FramelessHelper);
+    w->disconnect(this);
     FramelessWidgetData *data = d->m_widgetDataHash.take(w);
     if (data) {
         w->removeEventFilter(this);
