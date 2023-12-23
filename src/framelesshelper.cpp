@@ -760,14 +760,14 @@ bool FramelessHelper::eventFilter(QObject *object, QEvent *event)
     switch (event->type()) {
     case QEvent::WindowTitleChange:
         emit windowTitleChanged(widget->windowTitle());
-        return true;
+        break;
     case QEvent::WindowIconChange:
         emit windowIconChanged(widget->windowIcon());
-        return true;
+        break;
     case QEvent::WindowStateChange:
         data->handleWindowStateChangeEvent();
         emit windowStateChanged(widget->windowState());
-        return true;
+        break;
     default:
         return data->handleWidgetEvent(event);
     }
