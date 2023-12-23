@@ -44,7 +44,7 @@ FramelessHelperPrivate::~FramelessHelperPrivate()
 bool FramelessHelperPrivate::isCaptionClassName(const char *name)
 {
     foreach (const QString &cn, m_captionClassNameList) {
-        if (cn.compare(name) == 0) {
+        if (cn.compare(QLatin1String(name)) == 0) {
             return true;
         }
     }
