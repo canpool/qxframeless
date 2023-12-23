@@ -68,7 +68,11 @@ qxframeless 是一种 Qt 无边框窗口的解决方案，力求代码简约，�
 
 ### 案例
 
-虚位以待中……
+- <font size=4>ribbon mainwindow demo</font>
+
+![ribbon](./doc/pics/ribbondemo.png)
+
+QxRibbon is a Qx componet like to Microsoft Ribbon style. For more information, please visit https://gitee.com/icanpool/qtcanpool
 
 ### 后语
 
