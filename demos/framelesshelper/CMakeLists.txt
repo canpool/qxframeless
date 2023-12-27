@@ -27,7 +27,6 @@ target_link_libraries(${FRAMELESSHELPER_DEMO_NAME} PUBLIC
 )
 
 set(QX_FRAMELESS_LIB_NAME qxframeless${QX_FRAMELESS_VERSION_MAJOR})
-find_library(qxframeless NAMES "${QX_FRAMELESS_LIB_NAME}")
 target_link_libraries(${FRAMELESSHELPER_DEMO_NAME} PRIVATE "${QX_FRAMELESS_LIB_NAME}")
 
 set_target_properties(${FRAMELESSHELPER_DEMO_NAME} PROPERTIES
