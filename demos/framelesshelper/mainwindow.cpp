@@ -55,6 +55,11 @@ MainWindow::MainWindow(QWidget *parent) :
     });
     connect(helper, &FramelessHelper::windowStateChanged, this, [=](Qt::WindowStates state) {
        qDebug() << state;
+       if (isMaximized()) {
+           ui->pushButtonMaximize->setText(tr("restore"));
+       } else {
+           ui->pushButtonMaximize->setText(tr("maximize"));
+       }
     });
 
     ui->checkBoxWidgetMovable->setChecked(helper->widgetMovable());
@@ -126,10 +131,8 @@ void MainWindow::on_pushButtonClose_clicked()
 void MainWindow::on_pushButtonMaximize_clicked()
 {
     if (isMaximized()) {
-        ui->pushButtonMaximize->setText(tr("maximize"));
         showNormal();
     } else {
-        ui->pushButtonMaximize->setText(tr("restore"));
         showMaximized();
     }
 }
