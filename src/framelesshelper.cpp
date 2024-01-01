@@ -786,6 +786,7 @@ bool FramelessHelper::nativeEventFilter(const QByteArray &eventType, void *messa
         if (data == nullptr) {
             return false;
         }
+#ifndef QX_FRAMELESS_NATIVE
         switch (msg->message) {
             case WM_GETMINMAXINFO: {
                 // prevent taskbar is covered when maximized
@@ -803,7 +804,7 @@ bool FramelessHelper::nativeEventFilter(const QByteArray &eventType, void *messa
                 }
             }
         }
-#ifdef QX_FRAMELESS_NATIVE
+#else
         FramelessWidgetDataNativeWin *winData = reinterpret_cast<FramelessWidgetDataNativeWin *>(data);
         if (winData == nullptr) {
             return false;
