@@ -9,6 +9,7 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QMouseEvent>
+#include <QStatusBar>
 
 #include "framelesshelper.h"
 
@@ -41,6 +42,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QWidget *titleWidget = new QWidget(this);
     titleWidget->setLayout(titleLayout);
     setMenuWidget(titleWidget);
+
+    QPalette palette = titleWidget->palette();
+    palette.setColor(QPalette::Window, QColor(200, 100, 100));
+    titleWidget->setPalette(palette);
+    titleWidget->setAutoFillBackground(true);
+
+    QStatusBar *statusBar = this->statusBar();
+    palette = statusBar->palette();
+    palette.setColor(QPalette::Window, QColor(0, 100, 100));
+    statusBar->setPalette(palette);
+    statusBar->setAutoFillBackground(true);
 
     qDebug() << titleWidget->height();
 
