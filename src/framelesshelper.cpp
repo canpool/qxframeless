@@ -165,6 +165,7 @@ bool FramelessWidgetDataNativeWin::handleNativeWindowsMessage(MSG *msg, QXRESULT
         m_dpi[1] = HIWORD(msg->wParam);
         break;
     }
+    case WM_SIZE:
     case WM_MOVE: {
         if (m_dpi[0] != m_dpi[1]) {
             break;
